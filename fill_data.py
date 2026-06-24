@@ -11,12 +11,11 @@ DISCIPLINES = [
 
 NUMBER_STUDENTS = 50
 NUMBER_GROUPS = 3
-NUMBER_DISCIPLINES = len(DISCIPLINES)
 NUMBER_TEACHERS = 5
 NUMBER_GRADES = 20 
 
 
-def generate_fake_data(number_teachers, number_groups, number_students, number_disciplines, number_grades, disciplines) -> tuple:
+def generate_fake_data(number_teachers, number_groups, number_students, number_grades, disciplines) -> tuple:
     fake_teachers = []
     fake_groups = []
     fake_students = []
@@ -24,13 +23,13 @@ def generate_fake_data(number_teachers, number_groups, number_students, number_d
     fake_grades = []
     
     fake_data = faker.Faker()
+    number_disciplines = len(disciplines)
     
     for _ in range(number_teachers): 
         fake_teachers.append((fake_data.first_name(), fake_data.last_name()))
 
     for i in range(1, number_groups + 1):
-        group_name = f"{'PY'}-{i}"
-        fake_groups.append((group_name,))
+        fake_groups.append((f"PY-{i}",))
         
     for _ in range(number_students):
         fake_students.append((fake_data.first_name(), fake_data.last_name(), randint(1, number_groups )))
@@ -55,7 +54,9 @@ def generate_fake_data(number_teachers, number_groups, number_students, number_d
                 randint(0, 100), 
                 datetime(2025, 12, randint(10, 20)).date() # Imagine that grades was received in the end of 2025 session
             ))
-        for _ in range(randint(1, number_grades - number_disciplines)):
+        max_extra_grades = max(0, number_grades - number_disciplines)
+        
+        for _ in range(randint(0, max_extra_grades)):
             fake_grades.append((
                 student_id, 
                 randint(1, number_disciplines), 
@@ -86,11 +87,9 @@ def insert_data_to_db(teachers, groups, students, disciplines, grades) -> None:
         sql_to_grades = """INSERT INTO grades(student_id, discipline_id, grade, created_at) VALUES (?, ?, ?, ?)"""
         cur.executemany(sql_to_grades, grades)
         
-        con.commit()
         
 if __name__ == "__main__":
     
-    teachers, groups, students, disciplines, grades = generate_fake_data(
-        NUMBER_TEACHERS, NUMBER_GROUPS, NUMBER_STUDENTS, NUMBER_DISCIPLINES, NUMBER_GRADES, disciplines=DISCIPLINES
-    )
-    insert_data_to_db(teachers, groups, students, disciplines, grades)
+    insert_data_to_db(*generate_fake_data(
+            NUMBER_TEACHERS, NUMBER_GROUPS, NUMBER_STUDENTS, NUMBER_GRADES, disciplines=DISCIPLINES
+        ))
